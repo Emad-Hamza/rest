@@ -15,11 +15,17 @@ $nickname = 'ObjectOrienter'.rand(0, 999);
 $data = array(
     'nickname' => $nickname,
     'avatarNumber' => 5,
-    'tagLine' => 'A test dev!'
+    'tagLine' => 'a test dev!'
 );
+
 
 $request = $client->post('/api/programmers', null, json_encode($data));
 $response = $request->send();
+
+// 2) GET a programmer resource
+$request = $client->get('/api/programmers/'.$nickname);
+$response = $request->send();
+
 
 echo $response;
 echo "\n\n";
