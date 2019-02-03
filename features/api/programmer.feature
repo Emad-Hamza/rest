@@ -46,3 +46,22 @@ Feature: Programmer
 #    Then the response status code should be 200
 #    And the "programmers" property should be an array
 #    And the "programmers" property should contain 3 items
+
+  Scenario: PUT to update a programmer
+    Given the following programmers exist:
+      | nickname    | avatarNumber | tagLine |
+      | CowboyCoder | 5            | foo     |
+    And I have the payload:
+    """
+    {
+      "nickname": "CowgirlCoder",
+      "avatarNumber" : 2,
+      "tagLine": "foo"
+    }
+    """
+    When I request "PUT /api/programmers/CowboyCoder"
+#    And print last response #uncomment to debug in case of errors
+    Then the response status code should be 200
+    And the "avatarNumber" property should equal "2"
+#    But the "nickname" property should equal "CowgirlCoder"
+

@@ -20,16 +20,15 @@ class ProgrammerController extends BaseController
          ->bind('api_programmers_show');
 
         $controllers->get('/api/programmers', array($this, 'listAction'));
+
+        $controllers->put('/api/programmers/{nickname}', array($this, 'updateAction'));
     }
 
     public function newAction(Request $request)
     {
-        $data = json_decode($request->getContent(), true);
 
-        $programmer = new Programmer($data['nickname'], $data['avatarNumber']);
-        $programmer->tagLine = $data['tagLine'];
-        $programmer->userId = $this->findUserByUsername('weaverryan')->id;
-
+        $programmer = new Programmer();
+        $this->handleRequest($request, $programmer);
         $this->save($programmer);
 
         $data = $this->serializeProgrammer($programmer);
@@ -82,6 +81,55 @@ class ProgrammerController extends BaseController
 
 
     }
+
+    public function updateAction($nickname, Request $request)
+    {
+        $programmer = $this->getProgrammerRepository()->findOneByNickname($nickname);
+
+        if (!$programmer) {
+            $this->throw404();
+        }
+
+        $this->handleRequest($request, $programmer);
+
+        $this->save($programmer);
+
+        $data = $this->serializeProgrammer($programmer);
+        $response = new JsonResponse($data, 200);
+
+
+        $response->headers->set('Content-Type', 'application/json');
+
+        return $response;
+    }
+
+    private function handleRequest(Request $request, Programmer $programmer)
+    {
+        $data = json_decode($request->getContent(), true);
+
+        $isNew = !$programmer->id;
+
+        if ($data === null) {
+            throw new \Exception(sprintf('Invalid JSON: '.$request->getContent()));
+        }
+
+        // determine which properties should be changeable on this request
+        $apiProperties = array('avatarNumber', 'tagLine');
+
+        if($isNew)
+        {
+            $apiProperties[] = 'nickname';
+        }
+
+        // update the properties
+        foreach ($apiProperties as $property) {
+            $val = isset($data[$property]) ? $data[$property] : null;
+            $programmer->$property = $val;
+        }
+        $programmer->userId = $this->findUserByUsername('weaverryan')->id;
+    }
+
+
 
     private function serializeProgrammer(Programmer $programmer)
     {
