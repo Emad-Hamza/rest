@@ -14,14 +14,18 @@ class ProgrammerController extends BaseController
 {
     protected function addRoutes(ControllerCollection $controllers)
     {
-         $controllers->post('/api/programmers', array($this, 'newAction'));
+        $controllers->post('/api/programmers', array($this, 'newAction'));
 
-         $controllers->get('/api/programmers/{nickname}', array($this, 'showAction'))
-         ->bind('api_programmers_show');
+        $controllers->get('/api/programmers/{nickname}', array($this, 'showAction'))
+            ->bind('api_programmers_show');
 
         $controllers->get('/api/programmers', array($this, 'listAction'));
 
         $controllers->put('/api/programmers/{nickname}', array($this, 'updateAction'));
+
+        $controllers->delete('/api/programmers/{nickname}', array($this, 'deleteAction'));
+
+        $controllers->patch('/api/programmers/{nickname}', array($this, 'updateAction'));
     }
 
     public function newAction(Request $request)
@@ -39,7 +43,6 @@ class ProgrammerController extends BaseController
             'api_programmers_show',
             ['nickname' => $programmer->nickname]
         );
-
 
 
 
@@ -123,12 +126,28 @@ class ProgrammerController extends BaseController
 
         // update the properties
         foreach ($apiProperties as $property) {
+
+            // if a property is missing on PATCH, that's ok - just skip it
+            if (!isset($data[$property]) && $request->isMethod('PATCH')) {
+                continue;
+            }
+
             $val = isset($data[$property]) ? $data[$property] : null;
             $programmer->$property = $val;
         }
         $programmer->userId = $this->findUserByUsername('weaverryan')->id;
     }
 
+    public function deleteAction($nickname)
+    {
+        $programmer = $this->getProgrammerRepository()->findOneByNickname($nickname);
+
+        if ($programmer) {
+            $this->delete($programmer);
+        }
+
+        return new Response(null, '204');
+    }
 
 
     private function serializeProgrammer(Programmer $programmer)

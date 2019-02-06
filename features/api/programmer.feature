@@ -65,3 +65,25 @@ Feature: Programmer
     And the "avatarNumber" property should equal "2"
 #    But the "nickname" property should equal "CowgirlCoder"
 
+  Scenario: DELETE a programmer
+    Given the following programmers exist:
+      | nickname   | avatarNumber |
+      | UnitTester | 3            |
+    When I request "DELETE /api/programmers/UnitTester"
+    Then the response status code should be 204
+
+  Scenario: PATCH to update a programmer
+    Given the following programmers exist:
+      | nickname    | avatarNumber | tagLine |
+      | CowboyCoder | 5            | foo     |
+    And I have the payload:
+    """
+    {
+      "tagLine": "giddyup"
+    }
+    """
+    When I request "PATCH /api/programmers/CowboyCoder"
+#    And print last response #uncomment to debug in case of errors
+    Then the response status code should be 200
+    And the "tagLine" property should equal "giddyup"
+    And the "avatarNumber" property should equal "5"
