@@ -65,12 +65,14 @@ Feature: Programmer
     And the "avatarNumber" property should equal "2"
 #    But the "nickname" property should equal "CowgirlCoder"
 
+
   Scenario: DELETE a programmer
     Given the following programmers exist:
       | nickname   | avatarNumber |
       | UnitTester | 3            |
     When I request "DELETE /api/programmers/UnitTester"
     Then the response status code should be 204
+
 
   Scenario: PATCH to update a programmer
     Given the following programmers exist:
@@ -87,3 +89,47 @@ Feature: Programmer
     Then the response status code should be 200
     And the "tagLine" property should equal "giddyup"
     And the "avatarNumber" property should equal "5"
+
+
+  Scenario: Validation errors
+    Given I have the payload:
+    """
+    {
+      "tagLine": "I'm from a test!"
+    }
+    """
+    When I request "POST /api/programmers"
+    Then the response status code should be 400
+    And the following properties should exist:
+    """
+    type
+    title
+    errors
+    """
+    And the "errors.nickname" property should exist
+    And the "errors.nickname" property should equal "Please enter a nickname"
+    But the "errors.avatarNumber" property should not exist
+
+  Scenario: PATCH to update a programmer
+    Given the following programmers exist:
+      | nickname    | avatarNumber | tagLine |
+      | CowboyCoder | 5            | foo     |
+    And I have the payload:
+    """
+    {
+      "tagLine": ""
+    }
+    """
+    When I request "PATCH /api/programmers/CowboyCoder"
+#    And print last response #uncomment to debug in case of errors
+    Then the response status code should be 400
+    And the following properties should exist:
+    """
+    type
+    title
+    errors
+    """
+    And the "errors.tagLine" property should exist
+    And the "errors.tagLine" property should equal "Don't leave tagLine empty"
+    But the "errors.avatarNumber" property should not exist
+    But the "errors.nickname" property should not exist
