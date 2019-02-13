@@ -2,6 +2,8 @@
 
 namespace KnpU\CodeBattle\Controller\Api;
 
+use KnpU\CodeBattle\Api\ApiProblem;
+use KnpU\CodeBattle\Api\ApiProblemException;
 use KnpU\CodeBattle\Controller\BaseController;
 use KnpU\CodeBattle\Model\Programmer;
 use Silex\Application;
@@ -9,6 +11,7 @@ use Silex\ControllerCollection;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class ProgrammerController extends BaseController
 {
@@ -36,7 +39,7 @@ class ProgrammerController extends BaseController
         $errors = $this->validate($programmer);
 
         if (!empty($errors)) {
-            return $this->handleValidationResponse($errors);
+            $this->throwApiProblemValidationException($errors);
         }
 
             $this->save($programmer);
@@ -103,7 +106,7 @@ class ProgrammerController extends BaseController
 
         if (!empty($errors))
         {
-            return $this->handleValidationResponse($errors);
+            $this->throwApiProblemValidationException($errors);
         }
 
         $this->save($programmer);
@@ -124,7 +127,14 @@ class ProgrammerController extends BaseController
         $isNew = !$programmer->id;
 
         if ($data === null) {
-            throw new \Exception(sprintf('Invalid JSON: '.$request->getContent()));
+
+            $problem = new ApiProblem(
+                400,
+                ApiProblem::TYPE_INVALID_REQUEST_BODY_FORMAT
+            );
+
+
+            throw new ApiProblemException($problem);
         }
 
         // determine which properties should be changeable on this request
@@ -171,16 +181,17 @@ class ProgrammerController extends BaseController
         );
     }
 
-    private function handleValidationResponse(array $errors)
+    private function throwApiProblemValidationException(array $errors)
     {
-        $data = array(
-            'type' => 'validation_error',
-            'title' => 'There was a validation error',
-            'errors' => $errors
+
+        $apiProblem = new ApiProblem(
+            400,
+            ApiProblem::TYPE_VALIDATION_ERROR
         );
 
-        return new JsonResponse($data, 400);
+        $apiProblem->set('errors', $errors);
 
+        throw new ApiProblemException($apiProblem);
     }
 
 }

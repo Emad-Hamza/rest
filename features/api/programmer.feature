@@ -129,7 +129,22 @@ Feature: Programmer
     title
     errors
     """
+    And the "Content-Type" header should be "application/problem+json"
     And the "errors.tagLine" property should exist
     And the "errors.tagLine" property should equal "Don't leave tagLine empty"
     But the "errors.avatarNumber" property should not exist
     But the "errors.nickname" property should not exist
+
+
+  Scenario: Error response on invalid JSON
+    Given I have the payload:
+    """
+    {
+      "avatarNumber" : "2
+      "tagLine": "I'm from a test!"
+    }
+    """
+    When I request "POST /api/programmers"
+    Then the response status code should be 400
+    And the "Content-Type" header should be "application/problem+json"
+    And the "type" property should equal "invalid_body_format"
